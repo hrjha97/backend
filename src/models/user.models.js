@@ -92,7 +92,7 @@ userSchema.methods.generateRefreshToken = function(){
     process.env.
     REFRESH_TOKEN_SECRET,
     {
-        expiresIn : process.env.REFRESH_TOKEN_EXPIRY  //token will be valid for 30
+        expiresIn : process.env.REFRESH_TOKEN_EXPIRY  //token will be valid for 10 days
     }
     )
 
