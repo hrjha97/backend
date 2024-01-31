@@ -17,7 +17,7 @@ const registerUser = asyncHandler(async (req,res)=>{
     //9. return response
 
     const {fullName,email,username,password} = req.body
-    console.log("Passowrd: ",password);
+   
     if (
         [fullName,email,password,username].some((field)=>{
             field?.trim()===""
@@ -26,16 +26,25 @@ const registerUser = asyncHandler(async (req,res)=>{
         throw new ApiError(400,'Please provide full name,email,username & password')
 
     }
-    const existedUser = User.findOne({
-        $or : [{username},{email}]
+    const existedUser = await User.findOne({
+        $or: [{ username }, { email }]
     })
     if(existedUser){
-        throw new ApiError(409,"Userrname already exists");
+        throw new ApiError(409,"Username or email already exists");
 
     }
-    const avatarLocalPath = req.files?.avatar[0]?.path
-    const coverImageLocalPath = req.files?.coverImage[0].path
-       
+    const avatarLocalPath = req.files?.avatar[0]?.path;
+    // const coverImageLocalPath = req.files?.coverImage[0].path;
+    let coverImageLocalPath;
+
+    if (req.files && Array.isArray(req.files.coverImage)&&
+     req.files.coverImage.length >0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+        
+    }
+
+
+
     if(!avatarLocalPath){
         throw new ApiError(400,"Avataar needed");
 
@@ -45,7 +54,7 @@ const registerUser = asyncHandler(async (req,res)=>{
 
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
     if(!avatar){
-        throw new ApiError(400,"Avataar needed");
+        throw new ApiError(400,"Avatar needed");
 
     }
     const user = await User.create({
@@ -54,7 +63,7 @@ const registerUser = asyncHandler(async (req,res)=>{
         coverImage : coverImage?.url || "",
         email,
         password,
-        username: username.tolowercase()
+        username: username.toLowerCase()
 
     })
     const createdUser = await User.findById(user._id)
@@ -62,13 +71,13 @@ const registerUser = asyncHandler(async (req,res)=>{
         "-password -refreshToken"
     )
     if(!createdUser){
-        throw new Error(500,"Server error while registering user")
+        throw new ApiError(500,"Server error while registering user")
 
     }
 
     return res.status(201).json(
-        new ApiResponse(200,createdUser , "User Created Succesfully");
-        
+        new ApiResponse(200,createdUser , "User Created Succesfully")
+
     )
 
 
